@@ -1,0 +1,82 @@
+version: 2.1
+
+orbs:
+  docker: circleci/docker@1.5.0
+  gcp-gcr: circleci/gcp-gcr@0.15.0
+  gcp-gke: circleci/gcp-gke@1.4.0
+
+jobs:
+  build-app:
+    executor: gcp-gcr/default
+    resource_class: large
+    steps:
+      - checkout
+      - build_json_gcloud_file
+      - gcp-gcr/gcr-auth:
+          google-compute-zone: GCLOUD_ZONE
+          google-project-id: GCLOUD_PROJECT
+          gcloud-service-key: GCLOUD_API_KEY
+      - gcp-gcr/build-image:
+          dockerfile: Dockerfile
+          google-project-id: GCLOUD_PROJECT
+          image: pricecheck-api-<< pipeline.git.branch >>
+          registry-url: us.gcr.io
+          tag: << pipeline.git.revision >>
+      - gcp-gcr/push-image:
+          google-project-id: GCLOUD_PROJECT
+          image: pricecheck-api-<< pipeline.git.branch >>
+          registry-url: us.gcr.io
+          tag: << pipeline.git.revision >>
+
+  set-k8-images:
+    executor: gcp-gke/default
+    resource_class: small
+    steps:
+      - build_json_gcloud_file
+      - gcp-gke/install
+      - gcp-gke/update-kubeconfig-with-credentials:
+          cluster: $CLUSTER
+          google-compute-zone: GCLOUD_ZONE
+          google-project-id: GCLOUD_PROJECT
+          gcloud-service-key: GCLOUD_API_KEY
+          install-kubectl: true
+          perform-login: true
+      - run:
+          name: "Install gke-gcloud-auth-plugin and set deployment image"
+          command: |
+            export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+            gcloud components update --quiet
+            gcloud components install gke-gcloud-auth-plugin
+            gcloud container clusters get-credentials $CLUSTER --zone=$GCLOUD_ZONE
+            kubectl set image deployment pricecheck-api-<< pipeline.git.branch >>-deployment pricecheck-api-<< pipeline.git.branch >>=us.gcr.io/$GCLOUD_PROJECT/pricecheck-api-<< pipeline.git.branch >>:<< pipeline.git.revision >>
+
+workflows:
+  build-and-push:
+    when:
+      or:
+        - equal: [ develop, << pipeline.git.branch >> ]
+        - equal: [ staging, << pipeline.git.branch >> ]
+        - equal: [ master, << pipeline.git.branch >> ]
+    jobs:
+      - build-app:
+          context:
+            - "CONTEXT_PRICE_CHECK"
+      - wait-for-deploy-approval:
+          requires:
+            - build-app
+          type: approval
+      - set-k8-images:
+          context:
+            - "CONTEXT_PRICE_CHECK"
+          requires:
+            - wait-for-deploy-approval
+
+commands:
+  build_json_gcloud_file:
+    description: "Builds the gcloud-servicekey.json from B64 string"
+    steps:
+      - run:
+          name: "Build GCloud credentials file"
+          command: |
+            echo ${GCLOUD_B64_API_KEY} | base64 --decode --ignore-garbage > $HOME/gcloud-api-key.json
+            echo 'export GCLOUD_API_KEY=$(cat $HOME/gcloud-api-key.json)' >> $BASH_ENV && source $BASH_ENV

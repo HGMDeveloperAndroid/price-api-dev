@@ -1,0 +1,15 @@
+{
+    "vagrant": {
+        "user": "vagrant",
+        "environment": "vagrant",
+        "hosts": ["127.0.0.1:2222"],
+        "site_dir": "/var/www/"
+    },
+    "development": {
+        "user": "p3bv2",
+        "environment": "development",
+        "group": "p3bv2",
+        "hosts": ["157.245.238.207"],
+        "site_dir": "/var/www/vhosts/p3bv2.bnomio.dev/public"
+    }
+}
