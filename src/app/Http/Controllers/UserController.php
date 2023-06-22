@@ -153,7 +153,7 @@ class UserController extends Controller
             'remember_me' => 'boolean',
         ]);
 
-/*
+
         if (Auth::attempt(['username' => request('username'), 'password' => request('password')])) {
             $user = Auth::user();
 
@@ -168,10 +168,10 @@ class UserController extends Controller
         } else {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-*/
+/*
         $database = env('DB_DATABASE');
         //$varPath = env('DB_HOST')+' ; '+env('DB_PORT')+' ; '+env('DB_USERNAME')+' ; '+env('DB_PASSWORD');
-        return response()->json(['success' => true, 'message' => $database]);
+        return response()->json(['success' => true, 'message' => $database]);*/
     }
 
     function env($key, $default = null)
