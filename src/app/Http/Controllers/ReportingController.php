@@ -369,11 +369,12 @@ class ReportingController extends Controller
         $pages = 50;
         if ($request->filled('perPage')) {
             $pages = $request->perPage;
-        }
+        }*/
         $ranking = $this->reportingRepository->rankingEfficiency($request);
-        //$ranking = null;
-        $collection = new RankingEfficiencyCollection($ranking->paginate($pages));*/
-        $collection = 'hola mundo';
+        //$ranking = null;*/
+        //$collection = new RankingEfficiencyCollection($ranking->paginate($pages));*/
+        //$collection = 'hola mundo';
+        $collection = $ranking;
         return $collection;
     }
 
