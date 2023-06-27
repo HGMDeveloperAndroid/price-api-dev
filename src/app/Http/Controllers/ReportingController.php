@@ -365,14 +365,15 @@ class ReportingController extends Controller
     {
         // Force return null until we optimize this query
         //return null;
-
+/*
         $pages = 50;
         if ($request->filled('perPage')) {
             $pages = $request->perPage;
         }
         $ranking = $this->reportingRepository->rankingEfficiency($request);
         //$ranking = null;
-        $collection = new RankingEfficiencyCollection($ranking->paginate($pages));
+        $collection = new RankingEfficiencyCollection($ranking->paginate($pages));*/
+        $collection = 'hola mundo';
         return $collection;
     }
 
