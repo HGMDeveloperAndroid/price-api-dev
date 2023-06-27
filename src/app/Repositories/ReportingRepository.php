@@ -660,13 +660,13 @@ class ReportingRepository
         $query = User::query();
 
         $sqlTextSearch = "is_rejected = 0 and is_valid = 1 and users.id not in(370, 371)";
-
+/*
         if ($request->filled('textSearch')) {
             $mission = "";
             $filter = "";
            $sqlTextSearch = $sqlTextSearch . " and (first_name like '%" . $request->textSearch . "%' or last_name like '%" . $request->textSearch . "%' or mother_last_name like '%". $request->textSearch . "%' or employee_number like '%". $request->textSearch ."%')";
         }
-
+*/
         if ($request->filled(['from', 'to'])) {
             $mission = "";
             $filter = "";
@@ -681,13 +681,13 @@ class ReportingRepository
             $last = $request->from;
             $morning = $request->to;
         }
-
+/*
         if ($request->filled(['mission'])) {
              $mission = " and ss.id_mission = " . $request->mission;
              $mission_user_points = "and up.id_mission = " . $request->mission;
              $query->where('scans.id_mission', $request->mission);
         }
-
+*/
         $query->select( 
             'users.id', 'users.first_name', 'users.last_name', 'users.mother_last_name', 'users.employee_number',
             DB::raw('

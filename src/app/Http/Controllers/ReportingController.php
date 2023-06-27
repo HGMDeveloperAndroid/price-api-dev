@@ -364,13 +364,14 @@ class ReportingController extends Controller
     public function rankingByEfficiency(Request $request)
     {
         // Force return null until we optimize this query
-        return null;
+        //return null;
 
         $pages = 50;
         if ($request->filled('perPage')) {
             $pages = $request->perPage;
         }
         $ranking = $this->reportingRepository->rankingEfficiency($request);
+        //$ranking = null;
         $collection = new RankingEfficiencyCollection($ranking->paginate($pages));
         return $collection;
     }
