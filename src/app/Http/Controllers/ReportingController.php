@@ -372,7 +372,7 @@ class ReportingController extends Controller
         }*/
         $ranking = $this->reportingRepository->rankingEfficiency($request);
         //$ranking = null;*/
-        //$collection = new RankingEfficiencyCollection($ranking->paginate($pages));*/
+        //$collection = new RankingEfficiencyCollection($ranking->paginate($pages));
         //$collection = 'hola mundo';
         $collection = $ranking;
         return $collection;

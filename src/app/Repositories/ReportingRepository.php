@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use League\Csv\Writer;
+use mysqli_result;
 
 class ReportingRepository
 {
@@ -652,6 +653,7 @@ class ReportingRepository
 
     public function rankingEfficiency(Request $request)
     {
+        /*
         $last = date("2000-01-01");
         $morning = date("Y-m-d", strtotime("+1 days"));
         $mission = "and ss.id_mission = scans.id_mission";
@@ -659,7 +661,7 @@ class ReportingRepository
         $filter = ", scans.id_mission";
         $query = User::query();
 
-        $sqlTextSearch = "is_rejected = 0 and is_valid = 1 and users.id not in(370, 371)";
+        $sqlTextSearch = "is_rejected = 0 and is_valid = 1 and users.id not in(370, 371)";*/
 /*
         if ($request->filled('textSearch')) {
             $mission = "";
@@ -667,7 +669,7 @@ class ReportingRepository
            $sqlTextSearch = $sqlTextSearch . " and (first_name like '%" . $request->textSearch . "%' or last_name like '%" . $request->textSearch . "%' or mother_last_name like '%". $request->textSearch . "%' or employee_number like '%". $request->textSearch ."%')";
         }
 */
-        if ($request->filled(['from', 'to'])) {
+/*        if ($request->filled(['from', 'to'])) {
             $mission = "";
             $filter = "";
             $query->when($request->from, function ($q, $from) {
@@ -680,7 +682,7 @@ class ReportingRepository
 
             $last = $request->from;
             $morning = $request->to;
-        }
+        }*/
 /*
         if ($request->filled(['mission'])) {
              $mission = " and ss.id_mission = " . $request->mission;
@@ -688,7 +690,7 @@ class ReportingRepository
              $query->where('scans.id_mission', $request->mission);
         }
 */
-        $query->select( 
+/*        $query->select( 
             'users.id', 'users.first_name', 'users.last_name', 'users.mother_last_name', 'users.employee_number',
             DB::raw('
                 (select COUNT(ss.id) from scans ss join missions mi on mi.id = ss.id_mission where ss.id_scanned_by = users.id and ss.deleted_at is null and DATE(ss.capture_date) >= "' . $last . '" and DATE(ss.capture_date) <= "'. $morning . '"' . $mission . ') as captures_made,
@@ -711,8 +713,32 @@ class ReportingRepository
             $query->orderBy('validated_captures', 'DESC')
                 ->orderBy('points', 'DESC')
                 ->orderBy('users.last_name')->get();
-        }
+        }*/
 
+
+        $query = "SELECT 
+        users.id,
+        users.first_name,
+        users.last_name,
+        users.mother_last_name,
+        users.employee_number
+    FROM
+        users
+    GROUP BY users.first_name , users.last_name , users.employee_number , users.mother_last_name , users.id
+    ORDER BY users.last_name ASC;";
+
+        $link = mysqli_connect("35.193.99.122", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");
+        mysqli_select_db($link, "pricecheck_dev");
+        $tildes = $link->query("SET NAMES 'utf8'"); //Para que se muestren las tildes
+        $result = mysqli_query($link, $query);
+        //mysqli_data_seek ($result, );
+        $extraido= mysqli_fetch_all($result);
+        $query = $extraido;
+        //echo "- Nombre: ".$extraido['nombre']."<br/>";
+        mysqli_free_result($result);
+        mysqli_close($link);
+        //printf($extraido['first_name']);
+        
         return $query;
     }
 
