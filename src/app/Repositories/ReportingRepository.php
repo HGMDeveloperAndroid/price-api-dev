@@ -715,13 +715,37 @@ class ReportingRepository
                 ->orderBy('users.last_name')->get();
         }*/
 
+        $from = '2018-01-01';
+        $to = '2019-01-01';
 
-        $query = "SELECT 
-        users.id,
-        users.first_name,
-        users.last_name,
-        users.mother_last_name,
-        users.employee_number
+            $query = "SELECT 
+            users.id,
+            users.first_name,
+            users.last_name,
+            users.mother_last_name,
+            users.employee_number,
+            (select COUNT(ss.id) from scans ss 
+        join missions mi on mi.id = ss.id_mission
+        where ss.id_scanned_by = users.id and 
+        ss.deleted_at is null and 
+        DATE(ss.capture_date) = $from and 
+        DATE(ss.capture_date) = $to) as captures_made,
+        (select COUNT(ss.id) from scans ss 
+        join missions mi on mi.id = ss.id_mission 
+        where ss.id_scanned_by = users.id and 
+        ss.is_valid = 1 and 
+        ss.is_rejected = 0 and 
+        ss.deleted_at is null and 
+        DATE(ss.capture_date) = $from and DATE(ss.capture_date) = $to) as validated_captures,
+        ((select (mm.mission_points + count(ss.id)) as points from scans ss 
+        join missions mm on mm.id = ss.id_mission 
+        where ss.id_scanned_by = users.id and
+        ss.is_valid = 1 and 
+    ss.is_rejected = 0  and	
+    ss.deleted_at is null and
+    ss.capture_date = $from and 
+    ss.capture_date = $to
+    group by mm.mission_points) + (select count(up.id) from user_points up where up.id_user = 5)) as points
     FROM
         users
     GROUP BY users.first_name , users.last_name , users.employee_number , users.mother_last_name , users.id
