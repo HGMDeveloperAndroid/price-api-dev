@@ -26,6 +26,7 @@ use App\Scans;
 
 use App\Exports\ProductsExport;
 use App\Exports\ScansExport;
+use App\Http\Resources\User as ResourcesUser;
 use Maatwebsite\Excel\Facades\Excel;
 
 
@@ -374,8 +375,10 @@ class ReportingController extends Controller
         //$ranking = null;*/
         //$collection = new RankingEfficiencyCollection($ranking->paginate($pages));
         //$collection = 'hola mundo';
-        $collection = $ranking;
-        return $collection;
+        //$collection = $ranking;
+        //return $collection;
+        
+    return response()->json(['success' => true, 'data'=> $ranking]);
     }
 
     public function rankingFirst3Places(Request $request)
