@@ -373,7 +373,15 @@ class ReportingController extends Controller
         if ($request->filled('perPage')) {
             $pages = $request->perPage;
         }*/
-        $ranking = $this->reportingRepository->rankingEfficiency($request);
+        try {
+
+            $ranking = $this->reportingRepository->rankingEfficiency($request);
+        } catch (\Throwable $th) {
+            //throw $th;
+            die("Error occurred:" . $th->getMessage());
+            $ranking = null;
+        }
+
         //$ranking = null;
         //$collection = new RankingEfficiencyCollection($ranking->paginate($pages));
         //$collection = 'hola mundo';
