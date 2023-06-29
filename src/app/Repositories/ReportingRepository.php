@@ -761,7 +761,7 @@ class ReportingRepository
         //echo "- Nombre: ".$extraido['nombre']."<br/>";
         mysqli_free_result($result);
         mysqli_close($link);
-        //printf($extraido['first_name']);
+        printf($extraido['first_name']);
         
         return $query;
     }
