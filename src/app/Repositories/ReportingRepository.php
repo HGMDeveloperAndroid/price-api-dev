@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use League\Csv\Writer;
 use mysqli_result;
+use PHPUnit\Util\Exception;
 
 class ReportingRepository
 {
@@ -750,18 +751,24 @@ class ReportingRepository
         users
     GROUP BY users.first_name , users.last_name , users.employee_number , users.mother_last_name , users.id
     ORDER BY users.last_name ASC;";
+    
+try{
+    $link = mysqli_connect("35.193.99.122", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");
+    mysqli_select_db($link, "pricecheck_dev");
+    $tildes = $link->query("SET NAMES 'utf8'"); //Para que se muestren las tildes
+    $result = mysqli_query($link, $query);
+    //mysqli_data_seek ($result, );
+    $extraido= mysqli_fetch_all($result);
+    $query = $extraido;
+    //echo "- Nombre: ".$extraido['nombre']."<br/>";
+    mysqli_free_result($result);
+    mysqli_close($link);
+    //printf($extraido['first_name']);
 
-        $link = mysqli_connect("35.193.99.122", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");
-        mysqli_select_db($link, "pricecheck_dev");
-        $tildes = $link->query("SET NAMES 'utf8'"); //Para que se muestren las tildes
-        $result = mysqli_query($link, $query);
-        //mysqli_data_seek ($result, );
-        $extraido= mysqli_fetch_all($result);
-        $query = $extraido;
-        //echo "- Nombre: ".$extraido['nombre']."<br/>";
-        mysqli_free_result($result);
-        mysqli_close($link);
-        printf($extraido['first_name']);
+}catch(Exception $sp){
+    die("Error occurred:" . $sp->getMessage());
+$query = null; 
+}
         
         return $query;
     }

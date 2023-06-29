@@ -23,6 +23,8 @@ use App\Store;
 use App\ListProducts;
 use App\Products;
 use App\Scans;
+use PDO;
+use PDOException;
 
 use App\Exports\ProductsExport;
 use App\Exports\ScansExport;
@@ -378,6 +380,28 @@ class ReportingController extends Controller
         //$collection = $ranking;
         //return $collection;
         
+        //$pdo = require 'database.php';
+        /*
+        try{
+        $link = mysqli_connect("35.193.99.122", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");
+        mysqli_select_db($link, "pricecheck_dev");
+        $tildes = $link->query("SET NAMES 'utf8'"); //Para que se muestren las tildes
+        
+
+        $sql = 'CALL pricecheck_dev.getRanking()';
+        
+        $publishers = [];
+        
+        $q = $link->prepare($sql);
+        $publishers= $q ->execute();
+        
+    }
+       catch (PDOException $pe) {
+        die("Error occurred:" . $pe->getMessage());
+             }
+        
+        print_r($publishers);*/
+
     return response()->json(['success' => true, 'data'=> $ranking]);
     }
 
