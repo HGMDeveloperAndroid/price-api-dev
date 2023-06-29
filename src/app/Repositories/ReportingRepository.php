@@ -16,6 +16,11 @@ use Illuminate\Support\Facades\DB;
 use League\Csv\Writer;
 use mysqli_result;
 use PHPUnit\Util\Exception;
+use Grimzy\LaravelMysqlSpatial\Connectors\ConnectionFactory;
+use Illuminate\Container\Container;
+//use Stubs\PDOStub;
+use PDO;
+use PDOException;
 
 class ReportingRepository
 {
@@ -753,16 +758,30 @@ class ReportingRepository
     ORDER BY users.last_name ASC;";
     
 try{
-    $link = mysqli_connect("35.193.99.122", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");
-    mysqli_select_db($link, "pricecheck_dev");
-    $tildes = $link->query("SET NAMES 'utf8'"); //Para que se muestren las tildes
-    $result = mysqli_query($link, $query);
+    //$link = mysqli_connect("35.193.99.122", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");
+    
+    try {
+        $conn = new PDO("mysql:host=35.193.99.122;dbname=pricecheck_dev", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");      
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        echo "Conexión realizada Satisfactoriamente";
+      }
+ 
+  catch(PDOException $e)
+      {
+      echo "La conexión ha fallado: " . $e->getMessage();
+      $conn = null;
+      }
+ 
+    
+    //mysqli_select_db($conn, "pricecheck_dev");
+    //$tildes = $conn->query("SET NAMES 'utf8'"); //Para que se muestren las tildes
+    $result = $conn->prepare($query);
     //mysqli_data_seek ($result, );
-    $extraido= mysqli_fetch_all($result);
+    $extraido= $result->execute();
     $query = $extraido;
     //echo "- Nombre: ".$extraido['nombre']."<br/>";
-    mysqli_free_result($result);
-    mysqli_close($link);
+    //mysqli_free_result($result);
+    //$conn->en;
     //printf($extraido['first_name']);
 
 }catch(Exception $sp){
