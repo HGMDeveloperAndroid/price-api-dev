@@ -374,7 +374,7 @@ class ReportingController extends Controller
         //$ranking = null;
         //$collection = new RankingEfficiencyCollection($ranking->paginate($pages));
         $collection = 'hola mundo';
-        $collection = $ranking;
+        //$collection = $ranking;
         return $collection;
     }
 
