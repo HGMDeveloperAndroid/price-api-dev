@@ -777,7 +777,8 @@ try{
     //$tildes = $conn->query("SET NAMES 'utf8'"); //Para que se muestren las tildes
     $result = $conn->prepare($query);
     //mysqli_data_seek ($result, );
-    $extraido= $result->execute();
+    $result->execute();
+    $extraido = $result->fetchAll(PDO::FETCH_ASSOC);
     $query = $extraido;
     //echo "- Nombre: ".$extraido['nombre']."<br/>";
     //mysqli_free_result($result);
