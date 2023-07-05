@@ -659,138 +659,129 @@ class ReportingRepository
 
     public function rankingEfficiency(Request $request)
     {
-        /*
-        $last = date("2000-01-01");
-        $morning = date("Y-m-d", strtotime("+1 days"));
-        $mission = "and ss.id_mission = scans.id_mission";
-        $mission_user_points = "";
-        $filter = ", scans.id_mission";
-        $query = User::query();
-
-        $sqlTextSearch = "is_rejected = 0 and is_valid = 1 and users.id not in(370, 371)";*/
-/*
-        if ($request->filled('textSearch')) {
-            $mission = "";
-            $filter = "";
-           $sqlTextSearch = $sqlTextSearch . " and (first_name like '%" . $request->textSearch . "%' or last_name like '%" . $request->textSearch . "%' or mother_last_name like '%". $request->textSearch . "%' or employee_number like '%". $request->textSearch ."%')";
-        }
-*/
-/*        if ($request->filled(['from', 'to'])) {
-            $mission = "";
-            $filter = "";
-            $query->when($request->from, function ($q, $from) {
-                $q->whereDate('scans.capture_date', '>=', $from);
-            });
-
-            $query->when($request->to, function ($q, $to) {
-                $q->whereDate('scans.capture_date', '<=', $to);
-            });
-
-            $last = $request->from;
-            $morning = $request->to;
-        }*/
-/*
-        if ($request->filled(['mission'])) {
-             $mission = " and ss.id_mission = " . $request->mission;
-             $mission_user_points = "and up.id_mission = " . $request->mission;
-             $query->where('scans.id_mission', $request->mission);
-        }
-*/
-/*        $query->select( 
-            'users.id', 'users.first_name', 'users.last_name', 'users.mother_last_name', 'users.employee_number',
-            DB::raw('
-                (select COUNT(ss.id) from scans ss join missions mi on mi.id = ss.id_mission where ss.id_scanned_by = users.id and ss.deleted_at is null and DATE(ss.capture_date) >= "' . $last . '" and DATE(ss.capture_date) <= "'. $morning . '"' . $mission . ') as captures_made,
-                (select COUNT(ss.id) from scans ss join missions mi on mi.id = ss.id_mission where ss.id_scanned_by = users.id and ss.is_valid = 1 and ss.is_rejected = 0 and ss.deleted_at is null and DATE(ss.capture_date) >= "' . $last . '" and DATE(ss.capture_date) <= "'. $morning . '"' . $mission . ') as validated_captures,
-                (select (mm.mission_points + count(ss.id)) as points from scans ss join missions mm on mm.id = ss.id_mission where ss.id_scanned_by = scans.id_scanned_by and ss.is_valid = 1 and ss.is_rejected = 0 ' . $mission . ' and ss.deleted_at is null and ss.capture_date >= "'. $last . '" and ss.capture_date <= "'. $morning . '" group by mm.mission_points) + (select count(up.id) from user_points up where users.id = up.id_user ' . $mission_user_points . ') as points
-            '))
-            ->join('scans', 'users.id', 'scans.id_scanned_by')
-            ->join('model_has_roles', 'users.id', 'model_has_roles.model_id')
-            ->whereRaw($sqlTextSearch)
-            ->groupByRaw(DB::raw(
-                'users.first_name, users.last_name,
-                users.employee_number, users.mother_last_name, users.id, scans.id_scanned_by' . $filter
-            ));
-
-        if (strcasecmp($request->sort, 'ASC') == 0) {
-            $query->orderBy('validated_captures')
-                ->orderBy('points')
-                ->orderBy('users.last_name', 'DESC')->get();
-        } else {
-            $query->orderBy('validated_captures', 'DESC')
-                ->orderBy('points', 'DESC')
-                ->orderBy('users.last_name')->get();
-        }*/
-
-        $from = '2018-01-01';
-        $to = '2019-01-01';
-
-            $query = "SELECT 
-            users.id,
-            users.first_name,
-            users.last_name,
-            users.mother_last_name,
-            users.employee_number,
-            (select COUNT(ss.id) from scans ss 
-        join missions mi on mi.id = ss.id_mission
-        where ss.id_scanned_by = users.id and 
-        ss.deleted_at is null and 
-        DATE(ss.capture_date) = $from and 
-        DATE(ss.capture_date) = $to) as captures_made,
-        (select COUNT(ss.id) from scans ss 
-        join missions mi on mi.id = ss.id_mission 
-        where ss.id_scanned_by = users.id and 
-        ss.is_valid = 1 and 
-        ss.is_rejected = 0 and 
-        ss.deleted_at is null and 
-        DATE(ss.capture_date) = $from and DATE(ss.capture_date) = $to) as validated_captures,
-        ((select (mm.mission_points + count(ss.id)) as points from scans ss 
-        join missions mm on mm.id = ss.id_mission 
-        where ss.id_scanned_by = users.id and
-        ss.is_valid = 1 and 
-    ss.is_rejected = 0  and	
-    ss.deleted_at is null and
-    ss.capture_date = $from and 
-    ss.capture_date = $to
-    group by mm.mission_points) + (select count(up.id) from user_points up where up.id_user = 5)) as points
-    FROM
-        users
-    GROUP BY users.first_name , users.last_name , users.employee_number , users.mother_last_name , users.id
-    ORDER BY users.last_name ASC;";
-    
-try{
-    //$link = mysqli_connect("35.193.99.122", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");
-    
-    try {
-        $conn = new PDO("mysql:host=35.193.99.122;dbname=pricecheck_dev", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");      
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        echo "Conexión realizada Satisfactoriamente";
-      }
- 
-  catch(PDOException $e)
-      {
-      echo "La conexión ha fallado: " . $e->getMessage();
-      $conn = null;
-      }
- 
-    
-    //mysqli_select_db($conn, "pricecheck_dev");
-    //$tildes = $conn->query("SET NAMES 'utf8'"); //Para que se muestren las tildes
-    $result = $conn->prepare($query);
-    //mysqli_data_seek ($result, );
-    $result->execute();
-    $extraido = $result->fetchAll(PDO::FETCH_ASSOC);
-    $query = $extraido;
-    //echo "- Nombre: ".$extraido['nombre']."<br/>";
-    //mysqli_free_result($result);
-    //$conn->en;
-    //printf($extraido['first_name']);
-
-}catch(Exception $sp){
-    die("Error occurred:" . $sp->getMessage());
-$query = null; 
-}
         
-        return $query;
+        $last = date("2000-01-01");
+           //echo "Ultima fecha: " . $last;
+        $morning = date("Y-m-d", strtotime("+1 days"));
+        $querys = User::query();
+           //echo "Fecha actual: " . $morning;
+        
+        if ($request->filled(['from', 'to'])) {
+            $from = $request->from;
+            $to = $request->to;
+            $filterFechas = "AND DATE(ss.capture_date) = '$from'
+            AND DATE(ss.capture_date) = '$to'";
+            $filterFechasPrincipal = "((`scans`.`capture_date` <= '$from'
+            AND `scans`.`capture_date` >= '$to')
+            OR `scans`.`capture_date` BETWEEN '$from' AND '$to') AND"; 
+        }else{
+            $filterFechas = "AND DATE(ss.capture_date) = '$last'
+            AND DATE(ss.capture_date) = '$morning'";
+            $filterFechasPrincipal = "((`scans`.`capture_date` <= '$last'
+            AND `scans`.`capture_date` >= '$morning')
+            OR `scans`.`capture_date` BETWEEN '$last' AND '$morning') AND"; 
+        }
+
+        if ($request->filled(['textSearch'])) {
+            $sqlTextSearch = $request ->textSearch;
+            $textSearch = "first_name like '%$sqlTextSearch%' or last_name like '%$sqlTextSearch%' or mother_last_name like '%$sqlTextSearch%' or employee_number like '%$sqlTextSearch%' AND";
+        }else{
+            $textSearch = "";
+        }
+
+        if ($request->filled(['mission'])) {
+            $reqMission = $request ->mission;
+            $missionSubSql = "AND `ss`.`id_mission` = $reqMission";
+            $missionWhereSubSql = "WHERE `up`.`id_mission` = $reqMission";
+            $missionWhereSql = "AND `scans`.`id_mission` = $reqMission";
+        }else{
+            $missionSubSql = "";
+            $missionWhereSubSql = "";
+            $missionWhereSql = "";
+        }
+         /**Se agrego */
+
+    $query = "SELECT 
+    `users`.`id`,
+    `users`.`first_name`,
+    `users`.`last_name`,
+    `users`.`mother_last_name`,
+    `users`.`employee_number`,
+    CONCAT(users.first_name, ' ', users.last_name, ' ', users.mother_last_name) AS name,
+    (SELECT COUNT(ss.id)
+        FROM
+            scans ss
+                JOIN
+            missions mi ON mi.id = ss.id_mission
+        WHERE
+            ss.id_scanned_by = users.id
+                AND ss.deleted_at IS NULL $filterFechas) AS captures_made,
+    (SELECT 
+            COUNT(ss.id)
+        FROM
+            scans ss
+                JOIN
+            missions mi ON mi.id = ss.id_mission
+        WHERE
+            ss.id_scanned_by = users.id
+                AND ss.is_valid = 1
+                AND ss.is_rejected = 0 $missionSubSql
+                AND ss.deleted_at IS NULL $filterFechas) AS validated_captures,
+    (SELECT 
+            (mm.mission_points + COUNT(ss.id)) AS points
+        FROM
+            scans ss
+                JOIN
+            missions mm ON mm.id = ss.id_mission
+        WHERE
+            ss.id_scanned_by = scans.id_scanned_by
+                AND ss.is_valid = 1
+                AND ss.is_rejected = 0
+                AND ss.deleted_at IS NULL $filterFechas GROUP BY mm.mission_points ) + (SELECT 
+            COUNT(up.id)
+        FROM
+            user_points up $missionWhereSubSql) AS points
+FROM
+    `users`
+        INNER JOIN
+    `scans` ON `users`.`id` = `scans`.`id_scanned_by`
+        INNER JOIN
+    `model_has_roles` ON `users`.`id` = `model_has_roles`.`model_id`
+WHERE $textSearch $filterFechasPrincipal users.id NOT IN (370 , 371) AND `users`.`deleted_at` IS NULL $missionWhereSql /**Se agrego */ 
+GROUP BY users.first_name , users.last_name , users.employee_number , users.mother_last_name , users.id , scans.id_scanned_by
+ORDER BY `captures_made` DESC , `validated_captures` DESC , `users`.`last_name` ASC;";
+
+    //echo "La conexión ha fallado: " . $query;
+        
+    try {    
+        $host = env('DB_HOST');
+        $dbname = env('DB_DATABASE');
+        $userDB = env('DB_USERNAME');
+        $passDB = env('DB_PASSWORD');
+        //echo "La conexión ha fallado: " . env('DB_HOST');
+
+        $conn = new PDO("mysql:host=$host;dbname=$dbname", "$userDB", "$passDB");      
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        //echo "Conexión realizada Satisfactoriamente";
+        $result = $conn->prepare($query);
+        $result->execute();
+        $extraido = $result->fetchAll(PDO::FETCH_ASSOC);
+        $querys = $extraido;
+    
+        //Cerrar conexion PDO - HGM - 03-07-2023
+        $result->closeCursor(); // opcional en MySQL, dependiendo del controlador de base de datos puede ser obligatorio
+        $result = null; // obligado para cerrar la conexión
+        $conn = null;
+        //
+
+    }catch(Exception $sp){
+        die("Error occurred:" . $sp->getMessage());
+        $querys = null; 
+    }catch(PDOException $e){
+        echo "La conexión ha fallado: " . $e->getMessage();
+        $conn = null;
+    }
+    return $querys;
     }
 
     public function rankingFirst3Places(Request $request)

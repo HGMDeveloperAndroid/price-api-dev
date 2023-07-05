@@ -368,48 +368,25 @@ class ReportingController extends Controller
     {
         // Force return null until we optimize this query
         //return null;
-/*
+        try {
+        /*    
         $pages = 50;
         if ($request->filled('perPage')) {
             $pages = $request->perPage;
         }*/
-        try {
+        //$pages = $request->perPage;
+         //echo "La conexión ha fallado: " . $pages;
 
             $ranking = $this->reportingRepository->rankingEfficiency($request);
+            //$collection = new RankingEfficiencyCollection($ranking->paginate($pages));
+        
         } catch (\Throwable $th) {
             //throw $th;
             die("Error occurred:" . $th->getMessage());
             $ranking = null;
+            //$collection = null;
         }
-
-        //$ranking = null;
-        //$collection = new RankingEfficiencyCollection($ranking->paginate($pages));
-        //$collection = 'hola mundo';
-        //$collection = $ranking;
-        //return $collection;
-        
-        //$pdo = require 'database.php';
-        /*
-        try{
-        $link = mysqli_connect("35.193.99.122", "pricecheck_dev", "s4EY7dyV@_Sn8Mnt");
-        mysqli_select_db($link, "pricecheck_dev");
-        $tildes = $link->query("SET NAMES 'utf8'"); //Para que se muestren las tildes
-        
-
-        $sql = 'CALL pricecheck_dev.getRanking()';
-        
-        $publishers = [];
-        
-        $q = $link->prepare($sql);
-        $publishers= $q ->execute();
-        
-    }
-       catch (PDOException $pe) {
-        die("Error occurred:" . $pe->getMessage());
-             }
-        
-        print_r($publishers);*/
-
+        //return $collection;   
     return response()->json(['success' => true, 'data'=> $ranking]);
     }
 
