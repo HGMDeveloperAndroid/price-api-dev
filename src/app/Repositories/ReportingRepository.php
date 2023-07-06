@@ -784,8 +784,61 @@ ORDER BY `captures_made` DESC , `validated_captures` DESC , `users`.`last_name` 
     return $querys;
     }
 
+
+
     public function rankingFirst3Places(Request $request)
     {
+        $query = "SELECT 
+        CONCAT(users.first_name,
+                ' ',
+                users.last_name,
+                ' ',
+                users.mother_last_name) AS name,
+        users.employee_number,
+        (SELECT 
+                COUNT(ss.id)
+            FROM
+                scans ss
+            WHERE
+                ss.id_scanned_by = ss.id_scanned_by
+                    AND ss.is_valid = 1
+                    AND ss.is_rejected = 0) AS validated_captures
+    FROM
+        users
+            JOIN
+        scans ss ON ss.id_scanned_by = users.id
+    GROUP BY users.first_name , users.last_name , ss.id_scanned_by , users.employee_number , users.mother_last_name , users.id
+    ORDER BY validated_captures DESC;";
+        try {    
+            $host = env('DB_HOST');
+            $dbname = env('DB_DATABASE');
+            $userDB = env('DB_USERNAME');
+            $passDB = env('DB_PASSWORD');
+            //echo "La conexión ha fallado: " . env('DB_HOST');
+    
+            $conn = new PDO("mysql:host=$host;dbname=$dbname", "$userDB", "$passDB");      
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            //echo "Conexión realizada Satisfactoriamente";
+            $result = $conn->prepare($query);
+            $result->execute();
+            $extraido = $result->fetchAll(PDO::FETCH_ASSOC);
+            $querys = $extraido;
+        
+            //Cerrar conexion PDO - HGM - 03-07-2023
+            $result->closeCursor(); // opcional en MySQL, dependiendo del controlador de base de datos puede ser obligatorio
+            $result = null; // obligado para cerrar la conexión
+            $conn = null;
+            //
+    
+        }catch(Exception $sp){
+            die("Error occurred:" . $sp->getMessage());
+            $querys = null; 
+        }catch(PDOException $e){
+            echo "La conexión ha fallado: " . $e->getMessage();
+            $conn = null;
+        }
+        return $querys;
+        /*
         $query = User::query();
 
         $query->select(
@@ -797,6 +850,6 @@ ORDER BY `captures_made` DESC , `validated_captures` DESC , `users`.`last_name` 
                 'users.employee_number', 'users.mother_last_name', 'users.id')
             ->orderBy('validated_captures', 'DESC');
 
-        return $query;
+        return $query;*/
     }
 }

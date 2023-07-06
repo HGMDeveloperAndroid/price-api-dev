@@ -367,36 +367,25 @@ class ReportingController extends Controller
     public function rankingByEfficiency(Request $request)
     {
         // Force return null until we optimize this query
-        //return null;
         try {
-        /*    
-        $pages = 50;
-        if ($request->filled('perPage')) {
-            $pages = $request->perPage;
-        }*/
-        //$pages = $request->perPage;
-         //echo "La conexión ha fallado: " . $pages;
-
-            $ranking = $this->reportingRepository->rankingEfficiency($request);
-            //$collection = new RankingEfficiencyCollection($ranking->paginate($pages));
-        
-        } catch (\Throwable $th) {
-            //throw $th;
+             $ranking = $this->reportingRepository->rankingEfficiency($request);
+            } catch (\Throwable $th) {
             die("Error occurred:" . $th->getMessage());
             $ranking = null;
-            //$collection = null;
         }
-        //return $collection;   
-    return response()->json(['success' => true, 'data'=> $ranking]);
+       return response()->json(['success' => true, 'data'=> $ranking]);
     }
 
     public function rankingFirst3Places(Request $request)
-    {
+    {/*
         $ranking = $this->reportingRepository->rankingFirst3Places($request)->get()->take(3);
 
         return [
             'data' => $ranking
         ];
+*/
+        $ranking = $this->reportingRepository->rankingFirst3Places($request);
+        return response()->json(['success' => true, 'data'=> $ranking]);
     }
 
     /**
