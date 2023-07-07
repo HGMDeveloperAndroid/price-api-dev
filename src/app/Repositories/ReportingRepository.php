@@ -699,6 +699,13 @@ class ReportingRepository
             $missionWhereSubSql = "";
             $missionWhereSql = "";
         }
+
+        if (strcasecmp($request->sort, 'ASC') == 0) {
+            $reqASC = $request ->sort;
+            $filterOBySql = "$reqASC";
+        }else{
+            $filterOBySql = "DESC";
+        }
          /**Se agrego */
 
     $query = "SELECT 
@@ -750,7 +757,7 @@ FROM
     `model_has_roles` ON `users`.`id` = `model_has_roles`.`model_id`
 WHERE $textSearch $filterFechasPrincipal users.id NOT IN (370 , 371) AND `users`.`deleted_at` IS NULL $missionWhereSql /**Se agrego */ 
 GROUP BY users.id
-ORDER BY `captures_made` DESC , `validated_captures` DESC , points ASC, `users`.`last_name` ASC;";
+ORDER BY `captures_made` $filterOBySql , `validated_captures` $filterOBySql , points $filterOBySql, `users`.`last_name` $filterOBySql;";
 
     //echo "La conexión ha fallado: " . $query;
         
