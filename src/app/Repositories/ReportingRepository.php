@@ -669,14 +669,14 @@ class ReportingRepository
         if ($request->filled(['from', 'to'])) {
             $from = $request->from;
             $to = $request->to;
-            $filterFechas = "AND DATE(ss.capture_date) = '$from'
-            AND DATE(ss.capture_date) = '$to'";
+            $filterFechas = "AND DATE(ss.capture_date) >= '$from'
+            AND DATE(ss.capture_date) <= '$to'";
             $filterFechasPrincipal = "((`scans`.`capture_date` <= '$from'
             AND `scans`.`capture_date` >= '$to')
             OR `scans`.`capture_date` BETWEEN '$from' AND '$to') AND"; 
         }else{
-            $filterFechas = "AND DATE(ss.capture_date) = '$last'
-            AND DATE(ss.capture_date) = '$morning'";
+            $filterFechas = "AND DATE(ss.capture_date) >= '$last'
+            AND DATE(ss.capture_date) <= '$morning'";
             $filterFechasPrincipal = "((`scans`.`capture_date` <= '$last'
             AND `scans`.`capture_date` >= '$morning')
             OR `scans`.`capture_date` BETWEEN '$last' AND '$morning') AND"; 
@@ -692,7 +692,7 @@ class ReportingRepository
         if ($request->filled(['mission'])) {
             $reqMission = $request ->mission;
             $missionSubSql = "AND `ss`.`id_mission` = $reqMission";
-            $missionWhereSubSql = "WHERE `up`.`id_mission` = $reqMission";
+            $missionWhereSubSql = "AND `up`.`id_mission` = $reqMission";
             $missionWhereSql = "AND `scans`.`id_mission` = $reqMission";
         }else{
             $missionSubSql = "";
@@ -714,8 +714,8 @@ class ReportingRepository
                 JOIN
             missions mi ON mi.id = ss.id_mission
         WHERE
-            ss.id_scanned_by = users.id
-                AND ss.deleted_at IS NULL $filterFechas) AS captures_made,
+            ss.id_scanned_by = users.id AND 
+            ss.deleted_at IS NULL $filterFechas) AS captures_made,
     (SELECT 
             COUNT(ss.id)
         FROM
@@ -734,13 +734,14 @@ class ReportingRepository
                 JOIN
             missions mm ON mm.id = ss.id_mission
         WHERE
-            ss.id_scanned_by = scans.id_scanned_by
-                AND ss.is_valid = 1
+            ss.id_scanned_by = users.id AND
+            ss.is_valid = 1
                 AND ss.is_rejected = 0
                 AND ss.deleted_at IS NULL $filterFechas GROUP BY mm.mission_points ) + (SELECT 
             COUNT(up.id)
         FROM
-            user_points up $missionWhereSubSql) AS points
+            user_points up 
+            WHERE users.id = up.id_user $missionWhereSubSql) AS points
 FROM
     `users`
         INNER JOIN
@@ -748,8 +749,8 @@ FROM
         INNER JOIN
     `model_has_roles` ON `users`.`id` = `model_has_roles`.`model_id`
 WHERE $textSearch $filterFechasPrincipal users.id NOT IN (370 , 371) AND `users`.`deleted_at` IS NULL $missionWhereSql /**Se agrego */ 
-GROUP BY users.first_name , users.last_name , users.employee_number , users.mother_last_name , users.id , scans.id_scanned_by
-ORDER BY `captures_made` DESC , `validated_captures` DESC , `users`.`last_name` ASC;";
+GROUP BY users.id
+ORDER BY `captures_made` DESC , `validated_captures` DESC , points ASC, `users`.`last_name` ASC;";
 
     //echo "La conexión ha fallado: " . $query;
         
