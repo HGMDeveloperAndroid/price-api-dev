@@ -733,22 +733,19 @@ class ReportingRepository
             ss.id_scanned_by = users.id
                 AND ss.is_valid = 1
                 AND ss.is_rejected = 0 $missionSubSql
-                AND ss.deleted_at IS NULL $filterFechas) AS validated_captures,
-    (SELECT 
-            (mm.mission_points + COUNT(ss.id)) AS points
-        FROM
-            scans ss
-                JOIN
-            missions mm ON mm.id = ss.id_mission
-        WHERE
-            ss.id_scanned_by = users.id AND
-            ss.is_valid = 1
-                AND ss.is_rejected = 0
-                AND ss.deleted_at IS NULL $filterFechas GROUP BY mm.mission_points ) + (SELECT 
-            COUNT(up.id)
-        FROM
-            user_points up 
-            WHERE users.id = up.id_user $missionWhereSubSql) AS points
+                AND ss.deleted_at IS NULL $filterFechas) AS validated_captures,    
+        ((select SUM(mission_points) as puntos 
+            from 
+                missions 
+            where id in (select id_mission 
+                from scans ss
+                    where id_scanned_by = users.id
+                    AND is_valid = 1 
+                    AND is_rejected = 0 
+                    AND deleted_at IS NULL $filterFechas)) + (SELECT 
+                    COUNT(up.id) 
+                    FROM user_points up 
+                        WHERE up.id_user = users.id $missionWhereSubSql ) ) AS points
 FROM
     `users`
         INNER JOIN
