@@ -714,7 +714,7 @@ class ReportingRepository
     `users`.`last_name`,
     `users`.`mother_last_name`,
     `users`.`employee_number`,
-    CONCAT(users.first_name, ' ', users.last_name, ' ', users.mother_last_name) AS name,
+    concat_ws(' ',users.first_name,users.last_name,users.mother_last_name) AS name
     (SELECT COUNT(ss.id)
         FROM
             scans ss
