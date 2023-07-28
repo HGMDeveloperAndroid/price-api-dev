@@ -53,9 +53,127 @@ class MissionsController extends Controller
      */
     public function list(Request $request)
     {
-        $mission = $this->missionRepository->Filters($request);
-        $collection = $mission->paginate(10)->pluck('title', 'id');
-        return response()->json($collection);
+        if ($request->filled(['typo'])) {
+            try {
+                //Inicio
+                //$last = "Peticion Actual";
+                //echo "Missions: " . $last;
+                $yesterday = date("Y-m-d", strtotime("-1 days"));
+                $validator = Validator::make($request->all(), [
+                    'title' => 'required|string|unique:missions,title,NULL,id,deleted_at,NULL|max:90',
+                    'description' => 'required|string|min:5',
+                    'mission_points' => 'numeric',
+                    'capture_points' => 'numeric',
+                    'start_date' => 'date|date_format:Y-m-d|after:' . $yesterday,
+                    'end_date' => 'date|date_format:Y-m-d|after:start_date',
+                    'regions' => 'required|array|min:1'
+    
+                ]);
+        
+                if ($validator->fails()) {
+                    return response()->json(['Validation errors' => $validator->errors()], JsonResponse::HTTP_BAD_REQUEST);
+                }
+        
+                $user = Auth::user();
+        
+                $mission = new Missions();
+                $mission->created_by = $user->id;
+                $mission->title = $request->title;
+                $mission->description = $request->description;
+                $mission->mission_points = $request->mission_points;
+                $mission->capture_points = $request->capture_points;
+                $mission->start_date = $request->start_date;
+                $mission->end_date = $request->end_date;
+        
+                if ($mission->save()) {
+                    if ($request->has('regions') && !empty($request->regions)) {
+                        $mission->regions()->sync($request->regions);
+                    }
+                }
+        
+                $missionResource = new MissionResource($mission);
+        
+                $zone_missions =  DB::table('zone_missions')
+                    ->where('id_mission', $mission->id)->get();
+                $id_zone = '';
+        
+                foreach ($zone_missions as $zone) {
+                    $id_zone .= $zone->id_zone . ',';
+                }
+        
+                $id_zone = explode(',', $id_zone);
+                $zone_users =  DB::table('zone_users')->whereIn('id_zone', $id_zone)->get();
+                $id_user = '';
+        
+                foreach ($zone_users as $zone) {
+                    $id_user .= $zone->id_user . ',';
+                }
+        
+                $id_user = explode(',', $id_user);
+                $recipients = DeviceToken::whereIn('id_user', $id_user)->pluck('device_token')->toArray();
+        
+                $payloads = [
+                    'content_available' => true,
+                    'data' => [
+                        'title' => $mission->title,
+                        'description' => $mission->description,
+                        'type' => 'NEW_MISSION',
+                        'dateTime' => $mission->created_at
+                    ],
+                    'notification' => [
+                        'title' => 'Nueva misión',
+                        'body' => $mission->title
+                    ]
+                ];
+        
+                $payloads['registration_ids'] = $recipients;
+                $payloads['time_to_live'] = 60;
+                $payloads['android_channel_id'] = env('ANDROID_CHANNEL_ID');
+        
+                $headers = [
+                    'Authorization: key=' . env('FCM_SERVER_KEY'),
+                    'Content-Type: application/json',
+                ];
+        
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL,env('FCM_ENDPOINT'));
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST,"POST");
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payloads));
+                curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
+        
+                $response = curl_exec($ch);
+                curl_close($ch);
+        
+        
+                $users = DeviceToken::select('id_user')->whereIn('id_user', $id_user)->groupBy('id_user')->get();
+        
+                foreach ($users as $user) {
+                    Notifications::create([
+                        'id_user' => $user->id_user,
+                        'notification_title' => 'Nueva misión',
+                        'body' => $mission->title,
+                        'data_title' => $mission->title,
+                        'description' => $mission->description,
+                        'type' => 'NEW_MISSION',
+                        'dateTime'  => $mission->created_at
+                    ]);
+                }          
+     
+             } catch (\Throwable $th) {
+                die("Error occurred:" . $th->getMessage());
+                $missionResource = null;
+            }
+     
+             //Fin
+            
+            return response()->json(['success' => true, 'data' => $missionResource], JsonResponse::HTTP_CREATED);
+
+        }else{
+            $mission = $this->missionRepository->Filters($request);
+            $collection = $mission->paginate(10)->pluck('title', 'id');
+            return response()->json($collection);
+        }
+ 
     }
 
     /**
@@ -66,107 +184,240 @@ class MissionsController extends Controller
      */
     public function store(Request $request)
     {
-        $yesterday = date("Y-m-d", strtotime("-1 days"));
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|unique:missions,title,NULL,id,deleted_at,NULL|max:90',
-            'description' => 'required|string|min:5',
-            'mission_points' => 'numeric',
-            'capture_points' => 'numeric',
-            'start_date' => 'date|date_format:Y-m-d|after:' . $yesterday,
-            'end_date' => 'date|date_format:Y-m-d|after:start_date',
-            'regions' => 'required|array|min:1'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['Validation errors' => $validator->errors()], JsonResponse::HTTP_BAD_REQUEST);
-        }
-
-        $user = Auth::user();
-
-        $mission = new Missions();
-        $mission->created_by = $user->id;
-        $mission->title = $request->title;
-        $mission->description = $request->description;
-        $mission->mission_points = $request->mission_points;
-        $mission->capture_points = $request->capture_points;
-        $mission->start_date = $request->start_date;
-        $mission->end_date = $request->end_date;
-
-        if ($mission->save()) {
-            if ($request->has('regions') && !empty($request->regions)) {
-                $mission->regions()->sync($request->regions);
-            }
-        }
-
-        $missionResource = new MissionResource($mission);
-
-        $zone_missions =  DB::table('zone_missions')
-            ->where('id_mission', $mission->id)->get();
-        $id_zone = '';
-
-        foreach ($zone_missions as $zone) {
-            $id_zone .= $zone->id_zone . ',';
-        }
-
-        $id_zone = explode(',', $id_zone);
-        $zone_users =  DB::table('zone_users')->whereIn('id_zone', $id_zone)->get();
-        $id_user = '';
-
-        foreach ($zone_users as $zone) {
-            $id_user .= $zone->id_user . ',';
-        }
-
-        $id_user = explode(',', $id_user);
-        $recipients = DeviceToken::whereIn('id_user', $id_user)->pluck('device_token')->toArray();
-
-        $payloads = [
-            'content_available' => true,
-            'data' => [
-                'title' => $mission->title,
-                'description' => $mission->description,
-                'type' => 'NEW_MISSION',
-                'dateTime' => $mission->created_at
-            ],
-            'notification' => [
-                'title' => 'Nueva misión',
-                'body' => $mission->title
-            ]
-        ];
-
-        $payloads['registration_ids'] = $recipients;
-        $payloads['time_to_live'] = 60;
-        $payloads['android_channel_id'] = env('ANDROID_CHANNEL_ID');
-
-        $headers = [
-            'Authorization: key=' . env('FCM_SERVER_KEY'),
-            'Content-Type: application/json',
-        ];
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,env('FCM_ENDPOINT'));
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST,"POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payloads));
-        curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
-
-        $response = curl_exec($ch);
-        curl_close($ch);
-
-
-        $users = DeviceToken::select('id_user')->whereIn('id_user', $id_user)->groupBy('id_user')->get();
-
-        foreach ($users as $user) {
-            Notifications::create([
-                'id_user' => $user->id_user,
-                'notification_title' => 'Nueva misión',
-                'body' => $mission->title,
-                'data_title' => $mission->title,
-                'description' => $mission->description,
-                'type' => 'NEW_MISSION',
-                'dateTime'  => $mission->created_at
+        try {
+            //Inicio
+            $last = "Peticion Actual";
+            echo "Missions: " . $last;
+            $yesterday = date("Y-m-d", strtotime("-1 days"));
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|unique:missions,title,NULL,id,deleted_at,NULL|max:90',
+                'description' => 'required|string|min:5',
+                'mission_points' => 'numeric',
+                'capture_points' => 'numeric',
+                'start_date' => 'date|date_format:Y-m-d|after:' . $yesterday,
+                'end_date' => 'date|date_format:Y-m-d|after:start_date',
+                'regions' => 'required|array|min:1'
             ]);
+    
+            if ($validator->fails()) {
+                return response()->json(['Validation errors' => $validator->errors()], JsonResponse::HTTP_BAD_REQUEST);
+            }
+    
+            $user = Auth::user();
+    
+            $mission = new Missions();
+            $mission->created_by = $user->id;
+            $mission->title = $request->title;
+            $mission->description = $request->description;
+            $mission->mission_points = $request->mission_points;
+            $mission->capture_points = $request->capture_points;
+            $mission->start_date = $request->start_date;
+            $mission->end_date = $request->end_date;
+    
+            if ($mission->save()) {
+                if ($request->has('regions') && !empty($request->regions)) {
+                    $mission->regions()->sync($request->regions);
+                }
+            }
+    
+            $missionResource = new MissionResource($mission);
+    
+            $zone_missions =  DB::table('zone_missions')
+                ->where('id_mission', $mission->id)->get();
+            $id_zone = '';
+    
+            foreach ($zone_missions as $zone) {
+                $id_zone .= $zone->id_zone . ',';
+            }
+    
+            $id_zone = explode(',', $id_zone);
+            $zone_users =  DB::table('zone_users')->whereIn('id_zone', $id_zone)->get();
+            $id_user = '';
+    
+            foreach ($zone_users as $zone) {
+                $id_user .= $zone->id_user . ',';
+            }
+    
+            $id_user = explode(',', $id_user);
+            $recipients = DeviceToken::whereIn('id_user', $id_user)->pluck('device_token')->toArray();
+    
+            $payloads = [
+                'content_available' => true,
+                'data' => [
+                    'title' => $mission->title,
+                    'description' => $mission->description,
+                    'type' => 'NEW_MISSION',
+                    'dateTime' => $mission->created_at
+                ],
+                'notification' => [
+                    'title' => 'Nueva misión',
+                    'body' => $mission->title
+                ]
+            ];
+    
+            $payloads['registration_ids'] = $recipients;
+            $payloads['time_to_live'] = 60;
+            $payloads['android_channel_id'] = env('ANDROID_CHANNEL_ID');
+    
+            $headers = [
+                'Authorization: key=' . env('FCM_SERVER_KEY'),
+                'Content-Type: application/json',
+            ];
+    
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL,env('FCM_ENDPOINT'));
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST,"POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payloads));
+            curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
+    
+            $response = curl_exec($ch);
+            curl_close($ch);
+    
+    
+            $users = DeviceToken::select('id_user')->whereIn('id_user', $id_user)->groupBy('id_user')->get();
+    
+            foreach ($users as $user) {
+                Notifications::create([
+                    'id_user' => $user->id_user,
+                    'notification_title' => 'Nueva misión',
+                    'body' => $mission->title,
+                    'data_title' => $mission->title,
+                    'description' => $mission->description,
+                    'type' => 'NEW_MISSION',
+                    'dateTime'  => $mission->created_at
+                ]);
+            }          
+ 
+         } catch (\Throwable $th) {
+            die("Error occurred:" . $th->getMessage());
+            $missionResource = null;
         }
-
+ 
+         //Fin
+        
         return response()->json(['success' => true, 'data' => $missionResource], JsonResponse::HTTP_CREATED);
+
+        //return response()->json(['success' => true, 'data'=> "200"]);
+    }
+
+    public function missionesNew(Request $request)
+    {
+        return response()->json(['success' => true, 'data'=> "200"]);
+        /*
+        try {
+            //Inicio
+            //$last = "Peticion Actual";
+            //echo "Missions: " . $last;
+            $yesterday = date("Y-m-d", strtotime("-1 days"));
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|unique:missions,title,NULL,id,deleted_at,NULL|max:90',
+                'description' => 'required|string|min:5',
+                'mission_points' => 'numeric',
+                'capture_points' => 'numeric',
+                'start_date' => 'date|date_format:Y-m-d|after:' . $yesterday,
+                'end_date' => 'date|date_format:Y-m-d|after:start_date',
+                'regions' => 'required|array|min:1'
+
+            ]);
+    
+            if ($validator->fails()) {
+                return response()->json(['Validation errors' => $validator->errors()], JsonResponse::HTTP_BAD_REQUEST);
+            }
+    
+            $user = Auth::user();
+    
+            $mission = new Missions();
+            $mission->created_by = $user->id;
+            $mission->title = $request->title;
+            $mission->description = $request->description;
+            $mission->mission_points = $request->mission_points;
+            $mission->capture_points = $request->capture_points;
+            $mission->start_date = $request->start_date;
+            $mission->end_date = $request->end_date;
+    
+            if ($mission->save()) {
+                if ($request->has('regions') && !empty($request->regions)) {
+                    $mission->regions()->sync($request->regions);
+                }
+            }
+    
+            $missionResource = new MissionResource($mission);
+    
+            $zone_missions =  DB::table('zone_missions')
+                ->where('id_mission', $mission->id)->get();
+            $id_zone = '';
+    
+            foreach ($zone_missions as $zone) {
+                $id_zone .= $zone->id_zone . ',';
+            }
+    
+            $id_zone = explode(',', $id_zone);
+            $zone_users =  DB::table('zone_users')->whereIn('id_zone', $id_zone)->get();
+            $id_user = '';
+    
+            foreach ($zone_users as $zone) {
+                $id_user .= $zone->id_user . ',';
+            }
+    
+            $id_user = explode(',', $id_user);
+            $recipients = DeviceToken::whereIn('id_user', $id_user)->pluck('device_token')->toArray();
+    
+            $payloads = [
+                'content_available' => true,
+                'data' => [
+                    'title' => $mission->title,
+                    'description' => $mission->description,
+                    'type' => 'NEW_MISSION',
+                    'dateTime' => $mission->created_at
+                ],
+                'notification' => [
+                    'title' => 'Nueva misión',
+                    'body' => $mission->title
+                ]
+            ];
+    
+            $payloads['registration_ids'] = $recipients;
+            $payloads['time_to_live'] = 60;
+            $payloads['android_channel_id'] = env('ANDROID_CHANNEL_ID');
+    
+            $headers = [
+                'Authorization: key=' . env('FCM_SERVER_KEY'),
+                'Content-Type: application/json',
+            ];
+    
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL,env('FCM_ENDPOINT'));
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST,"POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payloads));
+            curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
+    
+            $response = curl_exec($ch);
+            curl_close($ch);
+    
+    
+            $users = DeviceToken::select('id_user')->whereIn('id_user', $id_user)->groupBy('id_user')->get();
+    
+            foreach ($users as $user) {
+                Notifications::create([
+                    'id_user' => $user->id_user,
+                    'notification_title' => 'Nueva misión',
+                    'body' => $mission->title,
+                    'data_title' => $mission->title,
+                    'description' => $mission->description,
+                    'type' => 'NEW_MISSION',
+                    'dateTime'  => $mission->created_at
+                ]);
+            }          
+ 
+         } catch (\Throwable $th) {
+            die("Error occurred:" . $th->getMessage());
+            $missionResource = null;
+        }
+ 
+         //Fin
+        
+        return response()->json(['success' => true, 'data' => $missionResource], JsonResponse::HTTP_CREATED);*/
+
     }
 
     /**
