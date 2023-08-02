@@ -184,6 +184,7 @@ class MissionsController extends Controller
      */
     public function store(Request $request)
     {
+        //header("Access-Control-Allow-Origin: *");
         try {
             //Inicio
             $last = "Peticion Actual";
@@ -295,9 +296,10 @@ class MissionsController extends Controller
  
          //Fin
         
-        return response()->json(['success' => true, 'data' => $missionResource], JsonResponse::HTTP_CREATED);
+        return response()->json(['success' => true, 'data' => $missionResource], JsonResponse::HTTP_CREATED)->header('Access-Control-Allow-Origin','*');
 
-        //return response()->json(['success' => true, 'data'=> "200"]);
+//echo "Ultima fecha: " . $mission;
+  //      return response()->json(['success' => true, 'data'=> $mission]);
     }
 
     public function missionesNew(Request $request)
@@ -325,16 +327,16 @@ class MissionsController extends Controller
             }
     
             $user = Auth::user();
-    
+    */
             $mission = new Missions();
-            $mission->created_by = $user->id;
+            //$mission->created_by = $user->id;
             $mission->title = $request->title;
             $mission->description = $request->description;
             $mission->mission_points = $request->mission_points;
             $mission->capture_points = $request->capture_points;
             $mission->start_date = $request->start_date;
             $mission->end_date = $request->end_date;
-    
+    /*
             if ($mission->save()) {
                 if ($request->has('regions') && !empty($request->regions)) {
                     $mission->regions()->sync($request->regions);
