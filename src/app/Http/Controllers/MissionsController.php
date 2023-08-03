@@ -111,7 +111,7 @@ class MissionsController extends Controller
         
                 $id_user = explode(',', $id_user);
                 $recipients = DeviceToken::whereIn('id_user', $id_user)->pluck('device_token')->toArray();
-        /*
+        
                 $payloads = [
                     'content_available' => true,
                     'data' => [
@@ -133,6 +133,7 @@ class MissionsController extends Controller
                 $headers = [
                     'Authorization: key=' . env('FCM_SERVER_KEY'),
                     'Content-Type: application/json',
+                    'Access-Control-Allow-Origin : *',
                 ];
         
                 $ch = curl_init();
@@ -143,7 +144,7 @@ class MissionsController extends Controller
         
                 $response = curl_exec($ch);
                 curl_close($ch);
-        */
+        
         
                 $users = DeviceToken::select('id_user')->whereIn('id_user', $id_user)->groupBy('id_user')->get();
         
