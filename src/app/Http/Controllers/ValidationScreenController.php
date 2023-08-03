@@ -142,6 +142,7 @@ class ValidationScreenController extends Controller
                 $headers = [
                     'Authorization: key=' . env('FCM_SERVER_KEY'),
                     'Content-Type: application/json',
+                    'Access-Control-Allow-Origin : *',
                 ];
 
                 $ch = curl_init();
@@ -187,6 +188,7 @@ class ValidationScreenController extends Controller
                 $headers = [
                     'Authorization: key=' . env('FCM_SERVER_KEY'),
                     'Content-Type: application/json',
+                    'Access-Control-Allow-Origin : *',
                 ];
 
                 $ch = curl_init();
@@ -232,6 +234,7 @@ class ValidationScreenController extends Controller
                 $headers = [
                     'Authorization: key=' . env('FCM_SERVER_KEY'),
                     'Content-Type: application/json',
+                    'Access-Control-Allow-Origin : *',
                 ];
 
                 $ch = curl_init();
