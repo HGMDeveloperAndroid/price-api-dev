@@ -133,6 +133,7 @@ class MissionsController extends Controller
                 $headers = [
                     'Authorization: key=' . env('FCM_SERVER_KEY'),
                     'Content-Type: application/json',
+                    'Access-Control-Allow-Origin : *',
                 ];
         
                 $ch = curl_init();
@@ -263,6 +264,7 @@ class MissionsController extends Controller
             $headers = [
                 'Authorization: key=' . env('FCM_SERVER_KEY'),
                 'Content-Type: application/json',
+                'Access-Control-Allow-Origin : *',
             ];
     
             $ch = curl_init();
@@ -304,8 +306,8 @@ class MissionsController extends Controller
 
     public function missionesNew(Request $request)
     {
-        return response()->json(['success' => true, 'data'=> "200"]);
-        /*
+        //return response()->json(['success' => true, 'data'=> "200"]);
+        
         try {
             //Inicio
             //$last = "Peticion Actual";
@@ -327,16 +329,16 @@ class MissionsController extends Controller
             }
     
             $user = Auth::user();
-    */
+    
             $mission = new Missions();
-            //$mission->created_by = $user->id;
+            $mission->created_by = $user->id;
             $mission->title = $request->title;
             $mission->description = $request->description;
             $mission->mission_points = $request->mission_points;
             $mission->capture_points = $request->capture_points;
             $mission->start_date = $request->start_date;
             $mission->end_date = $request->end_date;
-    /*
+    
             if ($mission->save()) {
                 if ($request->has('regions') && !empty($request->regions)) {
                     $mission->regions()->sync($request->regions);
@@ -385,6 +387,7 @@ class MissionsController extends Controller
             $headers = [
                 'Authorization: key=' . env('FCM_SERVER_KEY'),
                 'Content-Type: application/json',
+                'Access-Control-Allow-Origin : *',
             ];
     
             $ch = curl_init();
@@ -418,7 +421,7 @@ class MissionsController extends Controller
  
          //Fin
         
-        return response()->json(['success' => true, 'data' => $missionResource], JsonResponse::HTTP_CREATED);*/
+        return response()->json(['success' => true, 'data' => $missionResource], JsonResponse::HTTP_CREATED);
 
     }
 

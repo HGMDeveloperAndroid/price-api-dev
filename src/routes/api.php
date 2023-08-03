@@ -18,6 +18,11 @@ Route::match(['GET', 'POST'],'reset/{token}', 'Auth\ResetPasswordController@rese
 Route::post('reports/ranking-efficiency', 'ReportingController@rankingByEfficiency');
 Route::post('reports/ranking-first3', 'ReportingController@rankingFirst3Places');
 
+
+//Missions
+//Route::post('missions/create', 'MissionsController@missionesNew');
+//Route::apiResource('missions', 'MissionsController');
+
 Route::group(['middleware' => 'auth:api'], function(){
 
     Route::match(['get', 'post'], 'setup-password', 'UserController@setupPassword')->name('setup-password');
@@ -163,6 +168,8 @@ Route::group(['middleware' => 'auth:api'], function(){
         Route::post('missions/{mission}/update', 'MissionsController@update');
         Route::get('missions/all', 'MissionsController@all');
         Route::post('missions/list', 'MissionsController@list');
+        //Route::post('missions2', 'MissionsController@api2');
+        Route::post('missions/create', 'MissionsController@missionesNew');
         Route::get('missions/list-validation', 'MissionsController@listValidation');
         Route::apiResource('missions', 'MissionsController');
         Route::get('master-file/import', 'ThreeBProductsController@isThereAnImportedCSV');
