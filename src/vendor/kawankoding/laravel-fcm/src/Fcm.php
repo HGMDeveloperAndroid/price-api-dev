@@ -117,6 +117,7 @@ class Fcm
         $headers = [
             'Authorization: key=' . $this->serverKey,
             'Content-Type: application/json',
+            'Access-Control-Allow-Origin : *',
         ];
 
         $ch = curl_init();
