@@ -142,9 +142,8 @@ class MissionsController extends Controller
             $headers = [
                 'Authorization: key=' . env('FCM_SERVER_KEY'),
                 'Content-Type: application/json',
-                //'Access-Control-Allow-Origin : *',
-                'User-Agent: Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.43 Safari/537.31',
-                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Access-Control-Allow-Origin : *',
+                'Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept',
             ];
     
             $ch = curl_init();
