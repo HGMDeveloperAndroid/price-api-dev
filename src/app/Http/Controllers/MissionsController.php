@@ -143,6 +143,7 @@ class MissionsController extends Controller
                 'Authorization: key=' . env('FCM_SERVER_KEY'),
                 'Content-Type: application/json',
                 'Access-Control-Allow-Origin : *',
+                'Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept',
             ];
     
             $ch = curl_init();
