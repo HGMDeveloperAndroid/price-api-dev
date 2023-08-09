@@ -68,6 +68,7 @@ class MissionsController extends Controller
     {
         try {
             $yesterday = date("Y-m-d", strtotime("-1 days"));
+            /*
             $validator = Validator::make($request->all(), [
                 'title' => 'required|string|unique:missions,title,NULL,id,deleted_at,NULL|max:90',
                 'description' => 'required|string|min:5',
@@ -82,7 +83,7 @@ class MissionsController extends Controller
             if ($validator->fails()) {
                 return response()->json(['Validation errors' => $validator->errors()], JsonResponse::HTTP_BAD_REQUEST);
             }
-    
+    */
             $user = Auth::user();
     
             $mission = new Missions();
@@ -93,13 +94,13 @@ class MissionsController extends Controller
             $mission->capture_points = $request->capture_points;
             $mission->start_date = $request->start_date;
             $mission->end_date = $request->end_date;
-    
+    /*
             if ($mission->save()) {
                 if ($request->has('regions') && !empty($request->regions)) {
                     $mission->regions()->sync($request->regions);
                 }
             }
-    
+    */
             $missionResource = new MissionResource($mission);
     
             $zone_missions =  DB::table('zone_missions')
@@ -155,7 +156,7 @@ class MissionsController extends Controller
             $response = curl_exec($ch);
             curl_close($ch);
             */
-    
+    /*
             $users = DeviceToken::select('id_user')->whereIn('id_user', $id_user)->groupBy('id_user')->get();
     
             foreach ($users as $user) {
@@ -169,7 +170,7 @@ class MissionsController extends Controller
                     'dateTime'  => $mission->created_at
                 ]);
             }          
- 
+ */
          } catch (\Throwable $th) {
             die("Error occurred:" . $th->getMessage());
             $missionResource = null;
@@ -183,6 +184,9 @@ class MissionsController extends Controller
     {
         try {
             $yesterday = date("Y-m-d", strtotime("-1 days"));
+            //echo "yesterday: " . $yesterday;
+            //echo "request: " . $request;
+            
             $validator = Validator::make($request->all(), [
                 'title' => 'required|string|unique:missions,title,NULL,id,deleted_at,NULL|max:90',
                 'description' => 'required|string|min:5',
@@ -193,13 +197,15 @@ class MissionsController extends Controller
                 'regions' => 'required|array|min:1'
 
             ]);
-    /*
+            //echo "validator: " . $validator;
+            
+    
             if ($validator->fails()) {
                 return response()->json(['Validation errors' => $validator->errors()], JsonResponse::HTTP_BAD_REQUEST);
             }
-    */
-            $user = Auth::user();
     
+            $user = Auth::user();
+            //echo "user: " . $user;
             $mission = new Missions();
             $mission->created_by = $user->id;
             $mission->title = $request->title;
@@ -208,13 +214,13 @@ class MissionsController extends Controller
             $mission->capture_points = $request->capture_points;
             $mission->start_date = $request->start_date;
             $mission->end_date = $request->end_date;
-    
-            /*
+            //echo "mission: " . $mission;
+            
             if ($mission->save()) {
                 if ($request->has('regions') && !empty($request->regions)) {
                     $mission->regions()->sync($request->regions);
                 }
-            }*/
+            }
     
             $missionResource = new MissionResource($mission);
     
@@ -382,6 +388,7 @@ class MissionsController extends Controller
 
     public function all(Request $request)
     {
+         echo "mission: " . $request;
         $missions = Missions::where(function ($query) use ($request) {
             if ($request->has('available') && $request->available == 1) {
                 $query->where('start_date', '<=', \Carbon\Carbon::now()->format('Y-m-d 00:00:00'))
