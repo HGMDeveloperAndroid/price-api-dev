@@ -164,6 +164,7 @@ Route::group(['middleware' => 'auth:api'], function(){
         Route::get('missions/all', 'MissionsController@all');
         Route::post('missions/list', 'MissionsController@list');
         Route::post('missions/create', 'MissionsController@missionesNew');//hgm - 03/08/2023 se creo un nuevo metodo de creacion de misiones
+        Route::post('missions/notifyc', 'MissionsController@missionesAPP');//hgm - 08/08/2023 se creo un nuevo metodo notificacion de misiones
         Route::get('missions/list-validation', 'MissionsController@listValidation');
         Route::apiResource('missions', 'MissionsController'); //hgm - 03/08/2023 se elimino el metodo de cracion de misiones
         Route::get('master-file/import', 'ThreeBProductsController@isThereAnImportedCSV');
